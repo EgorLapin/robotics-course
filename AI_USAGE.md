@@ -18,6 +18,25 @@
   объяснение в graph.md составлено по наблюдаемым данным, а не скопировано.
 - Как результат был проверен независимо: все наблюдения — сырые логи терминалов
   (pose-broken.txt exit=124, pose-fixed.txt exit=0, hz-окна 62,49-62,52, node list в обоих
-  доменах); experience.json прошёл `python3 -m json.tool`; комплект — локальный
+  доменах); environment.json прошёл `python3 -m json.tool`; комплект — локальный
   `check_practice.py PR01` и зелёный CI на evidence-коммите; опыты воспроизводимы
   повторным запуском команд из README и graph.md.
+
+## PR02
+
+- Использован ИИ: да (`ai_used: true` в отчёте этой ПР).
+- Модель и версия: DeepSeek (агентная сборка qwen3.8-flash-next в DeepSeek Harness).
+- Среда или интерфейс агента: DeepSeek Harness (веб-GUI), команды выполняются в WSL2 Ubuntu
+  в этом workspace.
+- Затронутые компоненты: генерация пакета turtle_bringup (`ros2 pkg create`), launch-файл
+  `sim.launch.py` и правка `setup.py` (установка launch-ресурсов), прогон опытов (launch,
+  Twist-команды, опыт с `/cmd_vel`), оформление `evidence/pr02/*` (commands.md, types.md,
+  cli-raw.txt, report.json), README и CI workflow.
+- Характер помощи: выполнение команд условия, сбор и расшифровка логов (`topic info
+  --verbose`, коды завершения), диагностика flake8-замечания (порядок импортов в setup.py),
+  тексты разборов «до/сбой/после» составлены по фактическим выводам.
+- Как результат был проверен независимо: живой прогон в WSL2 (поза до/после команд
+  зафиксирована: x 5.544→6.509 при верном имени; подписчиков 0 при /cmd_vel; движение при
+  исправлении имени; остановка launch — «process has finished cleanly»); `colcon test`
+  зелёный (3 теста, 0 ошибок); `py_compile` launch-файла; локальный
+  `check_practice.py PR02` и зелёный CI на evidence-коммите.
