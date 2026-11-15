@@ -1,0 +1,24 @@
+# colcon workspace
+build/
+install/
+log/
+
+# course-kit (downloads, not tracked)
+.course-kit/
+robotics-course-kit-*.tar.gz
+robotics-course-kit-*.sha256.txt
+
+# ROS / Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.db3
+*.mcap
+*.bag
+
+# editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
