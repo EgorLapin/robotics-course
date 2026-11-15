@@ -1,0 +1,15 @@
+{
+  "runner": "wsl2",
+  "windows_host": true,
+  "os": "Ubuntu 24.04.5 LTS (WSL2, kernel 6.18.40.1-microsoft-standard-WSL2, x86_64)",
+  "ros_distro": "jazzy",
+  "ros_setup": "/opt/ros/jazzy/setup.bash",
+  "gazebo": "gz-sim 8.15.0 (Harmonic, ros-jazzy-ros-gz)",
+  "rmw": "rmw_fastrtps_cpp (значение по умолчанию, RMW_IMPLEMENTATION не задан)",
+  "course_kit_version": "v1-w10",
+  "experience_domains": {
+    "working": 16,
+    "broken": 17
+  },
+  "notes": "Запуск в WSL2-дистрибуции Ubuntu (systemd включён), GUI через WSLg. Секреты и полный вывод переменных среды не сохраняются."
+}
