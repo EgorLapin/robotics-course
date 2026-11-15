@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR03",
+  "commit": "39ae0c8df60acdf679a4060644b970ae48a9a331",
+  "course_kit": {
+    "version": "v1-w10",
+    "archive_sha256": "7a91d388d7bd3def7e058c8da48c32ff27ea6f14dc880a2da169c4102d456874"
+  },
+  "commands": [
+    "source /opt/ros/jazzy/setup.bash && source install/setup.bash && export ROS_DOMAIN_ID=16",
+    "ros2 pkg create --build-type ament_python --node-name patrol patrol --dependencies rclpy geometry_msgs",
+    "ros2 topic type /turtle1/pose",
+    "colcon build --symlink-install --packages-select patrol",
+    "python3 -m pytest src/patrol/test",
+    "colcon test --packages-select patrol && colcon test-result --verbose",
+    "ros2 launch turtle_bringup sim.launch.py",
+    "ros2 run patrol patrol",
+    "ros2 topic info /cmd_vel --verbose",
+    "ros2 topic info /turtle1/cmd_vel --verbose",
+    "ros2 topic echo /turtle1/pose --once",
+    "ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel",
+    "ros2 node list --no-daemon --spin-time 5",
+    "ros2 topic hz /turtle1/cmd_vel",
+    "python3 .course-kit/v1/tools/check_practice.py PR03 --submission ."
+  ],
+  "tests": [
+    {
+      "name": "pytest src/patrol/test: 7 passed, 1 skipped (decide_command: нет позы, NaN, нормальная, лимиты)",
+      "status": "passed"
+    },
+    {
+      "name": "colcon test patrol: 11 tests, 0 errors, 0 failures, 2 skipped",
+      "status": "passed"
+    },
+    {
+      "name": "коллектор entry point: ros2 run patrol patrol запускает узел /patrol (node list)",
+      "status": "passed"
+    },
+    {
+      "name": "сбой имени: без remap /cmd_vel Publisher 1 Subscription 0; /turtle1/cmd_vel Publisher 0 Subscription 1; поза не меняется (raw-broken.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "remap: /turtle1/cmd_vel Publisher 1 Subscription 1; поза меняется каждые 4 с (круг)",
+      "status": "passed"
+    },
+    {
+      "name": "замер частоты hz /turtle1/cmd_vel: 10,14-10,54 Гц за ~11 с (raw-hz.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "после Ctrl+C patrol поза заморожена, linear/angular velocity = 0 (ожидание, не мгновенно)",
+      "status": "passed"
+    }
+  ],
+  "defect": {
+    "reproducer": "При работающем симуляторе нода запущена без remap: ros2 run patrol patrol. Наблюдение: ros2 topic info /cmd_vel --verbose -> Publisher count 1, Subscription count 0; ros2 topic info /turtle1/cmd_vel --verbose -> Publisher count 0, Subscription count 1 (подписчик turtlesim); позы через 3 с идентичны (x 5.544444561004639) — черепаха стоит при работающем 10 Гц издателе. Полные записи: evidence/pr03/raw-broken.txt.",
+    "root_cause": "Нода публикует в относительное имя cmd_vel, которое в namespace / разворачивается в /cmd_vel, а подписчик turtlesim создан на /turtle1/cmd_vel. Тип geometry_msgs/msg/Twist у обоих одинаков, но DDS соединяет издателей и подписчиков по полному имени топика: имена различаются — соединения нет, команда не доставляется.",
+    "proof_after": "Исправлен только запуск (код не менялся): ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel -> ros2 topic info /turtle1/cmd_vel --verbose даёт Publisher count 1 и Subscription count 1; поза меняется каждые 4 с (x 5.452 -> 3.884, y 8.875 -> 7.029, theta -3.09 -> -1.46) — черепашка идёт по кругу; ros2 topic hz /turtle1/cmd_vel ~10,1-10,5 Гц (evidence/pr03/raw-fixed.txt, raw-hz.txt)."
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true
+  },
+  "time": {
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
+  },
+  "ai_used": true
+}

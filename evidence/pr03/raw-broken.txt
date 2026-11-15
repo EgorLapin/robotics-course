@@ -1,0 +1,22 @@
+# ПР03 · «Сломать»: ros2 run patrol patrol (без remap)
+$ head -1 /tmp/pr03g_broken.log
+[INFO] [1794767930.585733299] [patrol]: patrol started, waiting for /turtle1/pose
+
+$ ros2 topic info /cmd_vel --verbose | grep -E "Type|count"
+Type: geometry_msgs/msg/Twist
+Publisher count: 1
+Subscription count: 0
+
+$ ros2 topic info /turtle1/cmd_vel --verbose | grep -E "Type|count"
+Type: geometry_msgs/msg/Twist
+Publisher count: 0
+Subscription count: 1
+
+$ ros2 topic echo /turtle1/pose --once   # поза 1
+x: 5.544444561004639
+y: 5.544444561004639
+theta: 0.0
+$ sleep 3; ros2 topic echo /turtle1/pose --once   # та же — черепаха стоит
+x: 5.544444561004639
+y: 5.544444561004639
+theta: 0.0

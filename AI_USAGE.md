@@ -40,3 +40,24 @@
   исправлении имени; остановка launch — «process has finished cleanly»); `colcon test`
   зелёный (3 теста, 0 ошибок); `py_compile` launch-файла; локальный
   `check_practice.py PR02` и зелёный CI на evidence-коммите.
+
+## PR03
+
+- Использован ИИ: да (`ai_used: true` в отчёте этой ПР).
+- Модель и версия: DeepSeek (агентная сборка qwen3.8-flash-next в DeepSeek Harness).
+- Среда или интерфейс агента: DeepSeek Harness (веб-GUI), команды — в WSL2 Ubuntu этого
+  workspace.
+- Затронутые компоненты: код ноды `patrol` (`src/patrol/patrol/patrol.py` — подписка,
+  таймер, чистая `decide_command`), тесты `src/patrol/test/test_decide_command.py`,
+  прогон опытов (сломанный запуск, remap, hz, остановка), тексты `evidence/pr03/*`
+  (demo.md по сырым логам, tests.txt, raw-*.txt), report.json, README, CI workflow.
+- Характер помощи: написание каркаса по паттерну лекции, отладка завершения по SIGINT
+  (в Jazzy rclpy сам выключает контекст — нужен `ExternalShutdownException`), замер и
+  расшифровка hz-окон, формулировки «до/сбой/после» по фактическим выводам терминала.
+  Сценарий дефекта (относительный cmd_vel) и разбор ролей init/spin/callback заданы
+  условием работы.
+- Как результат был проверен независимо: поведение подтверждено живыми прогонами —
+  без remap Publisher 1 / Subscription 0 и неподвижная поза; с remap позы меняются каждые
+  4 с, hz ≈10,1–10,5 Гц; после SIGINT linear/angular velocity = 0. Тесты: pytest 7 passed
+  (включая негативные), colcon test 0 failures. Логи без правок — evidence/pr03/raw-*.txt;
+  локальный `check_practice.py PR03` и зелёный CI на evidence-коммите.

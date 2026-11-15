@@ -1,0 +1,9 @@
+$ ros2 topic hz /turtle1/cmd_vel   # patrol работает ~14 с; замер ~11 с до SIGINT
+average rate: 10.544
+	min: 0.038s max: 0.101s std dev: 0.01725s window: 12
+average rate: 10.277
+	min: 0.038s max: 0.101s std dev: 0.01273s window: 23
+average rate: 10.191
+	min: 0.038s max: 0.101s std dev: 0.01070s window: 33
+average rate: 10.143
+	min: 0.038s max: 0.101s std dev: 0.00931s window: 44

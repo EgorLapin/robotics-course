@@ -1,0 +1,12 @@
+# ПР03 · tests.txt — тесты пакета patrol (финальный код)
+
+## source install/setup.bash && python3 -m pytest src/patrol/test -q
+s.......                                                                 [100%]
+test/test_flake8.py: 16 warnings
+
+7 passed, 1 skipped, 16 warnings in 0.49s
+
+## colcon test --packages-select patrol && colcon test-result --verbose
+Finished <<< patrol [1.09s]
+Summary: 1 package finished [1.21s]
+Summary: 11 tests, 0 errors, 0 failures, 2 skipped

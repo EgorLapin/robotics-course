@@ -1,0 +1,40 @@
+# ПР03 · «Доказать»: ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel
+$ head -1 /tmp/pr03g_fixed.log
+[INFO] [1794767945.869636403] [patrol]: patrol started, waiting for /turtle1/pose
+
+$ ros2 node list --no-daemon --spin-time 5   # попытка 1
+/patrol
+/turtlesim
+
+$ ros2 topic info /turtle1/cmd_vel --verbose | grep -E "Type|count"
+Type: geometry_msgs/msg/Twist
+Publisher count: 1
+Subscription count: 1
+
+$ ros2 topic echo /turtle1/pose --once   # поза 1
+x: 5.452473163604736
+y: 8.875452995300293
+theta: -3.0911853313446045
+$ sleep 4; ros2 topic echo /turtle1/pose --once   # другое место — движение по кругу
+x: 3.8837056159973145
+y: 7.0294508934021
+theta: -1.4639853239059448
+
+$ ros2 topic hz /turtle1/cmd_vel   # замер ~11 с (нода работает >10 с до замера)
+average rate: 0.799
+	min: 0.011s max: 4.796s std dev: 2.04648s window: 4
+
+$ kill -INT 42738   # Ctrl+C в терминале patrol
+[INFO] [1794767945.869636403] [patrol]: patrol started, waiting for /turtle1/pose
+$ ros2 topic echo /turtle1/pose --once | grep -E velocity   # после останова: lin/ang = 0
+x: 6.703990459442139
+y: 8.404398918151855
+theta: 2.366414785385132
+linear_velocity: 0.0
+angular_velocity: 0.0
+$ sleep 5; ros2 topic echo /turtle1/pose --once   # то же — черепаха остановилась
+x: 6.703990459442139
+y: 8.404398918151855
+theta: 2.366414785385132
+linear_velocity: 0.0
+angular_velocity: 0.0
