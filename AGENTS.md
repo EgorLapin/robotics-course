@@ -9,11 +9,39 @@
   (проектная часть курса зафиксирована на Ubuntu 26.04 / ROS 2 Lyrical / Gazebo Jetty;
   базовые ПР01–ПР06 делаются на Jazzy здесь).
 - GUI работает через WSLg (RViz, turtlesim — можно запускать, окна появятся на Windows).
-- ROS 2 Jazzy: перед любой командой `ros2`/`colcon` в shell выполнять
-  `source /opt/ros/jazzy/setup.bash` (в ~/.bashrc после успешной установки).
+  В неинтерактивной сессии (`wsl.exe -d X -- bash -c`) переменных GUI нет; в login-шелле
+  (`bash -lc`) они есть: `DISPLAY=:0`, `WAYLAND_DISPLAY=wayland-0`.
+- ROS 2 Jazzy: установлен в `/opt/ros/jazzy` (502 МБ, 329 пакетов), строка
+  `source /opt/ros/jazzy/setup.bash` в `~/.bashrc` (строка 118). Не добавлять в .bashrc
+  другие дистрибутивы.
 - GitHub: приватный репозиторий `EgorLapin/robotics-course`, remote HTTPS,
   учёт через `gh` в WSL (`~/.config/gh/hosts.yml`, credential helper `gh auth setup-git`).
   Не коммитить токены, пароли, личные ключи.
+
+## Установка ROS 2 (выполнена 2026-11-16) — что важно знать
+
+- Установочный скрипт: `~/setup_ros_jazzy.sh`, лог: `~/ros_install.log`.
+  Ставились `ros-jazzy-desktop ros-dev-tools ros-jazzy-ros-gz ros-jazzy-rviz2
+  python3-colcon-common-extensions python3-rosdep` (1407 пакетов, 966 МБ архивов).
+- **Официальный `https://packages.ros.org` сломан по TLS**: с 2026-11-13 OSUOSL отдаёт
+  сертификат `CN=*.osuosl.org`, не покрывающий `packages.ros.org` → apt падает на
+  проверке подписи индекса. По http тот же хост жив, но ~45 КБ/с. Это проблема апстрима,
+  не локальная и не из-за VPN.
+- Поэтому APT-источник указывает на зеркало: `/etc/apt/sources.list.d/ros2.list` =
+  `deb [signed-by=/etc/apt/keyrings/ros2.gpg] https://mirrors.aliyun.com/ros2/ubuntu noble main`
+  (2–3 МБ/с; запасные: mirrors.tuna.tsinghua.edu.cn, mirrors.ustc.edu.cn).
+  Подлинность обеспечивает GPG: отпечаток ключа `C1CF 6E31 E6BA DE88 68B1 72B4 F42ED6FB AB17 C654`
+  (Open Robotics), `InRelease` зеркала проверен против него. Ключ скачан с
+  `raw.githubusercontent.com/ros/rosdistro/master/ros.key`.
+- rosdep инициализирован, кэш обновлён (`~/.ros/rosdep/sources.cache`).
+- Проверено работает: talker(C++)→listener(py), turtlesim + движение по `/turtle1/cmd_vel`,
+  `colcon build --symlink-install` на тестовом пакете, headless `gz sim -s` (Harmonic 8.15.0).
+- Особенности discovery в WSL2: кэш `ros2 daemon` может не увидеть ноды, запущенные
+  до его старта — при «пустом» `ros2 topic list` сделать `ros2 daemon stop && ros2 daemon start`.
+  Флаг `--no-daemon` есть у `ros2 topic list/echo`, но НЕ у `ros2 service call` / `ros2 topic pub`.
+- VPN (туннель `happ-default-tun` + Netbird `wt0`) режет скорость до внешних хостов и
+  ломает резолв `*.mycorpus.space` (DNS Netbird `100.107.234.218`). Для больших скачиваний
+  выключать; сам сайт курса `ros.lms.ci.nsu.ru` доступен и через него.
 
 ## Правила курса (ros.lms.ci.nsu.ru) — важно для сдач
 
@@ -41,12 +69,14 @@
   `[System.IO.File]::WriteAllText(unc, text, UTF8-no-BOM)` из PowerShell 5.1.
 - НЕ гонять heredoc/многострочный bash через `wsl.exe -- bash -c` внутри PowerShell —
   кавычки ломаются. Варианты: одна простая команда в одинарных кавычках; либо скрипт
-  во временный файл и `wsl.exe -d Ubuntu -- bash /mnt/c/...`; либо `wsl.exe -d Ubuntu -- bash`
+  во временный файл и `wsl.exe -d Ubuntu -- bash /home/egor/...`; либо `wsl.exe -d Ubuntu -- bash`
   со stdin через `Get-Content file | wsl.exe` .
+- В PowerShell 5.1 нет `??`, `-Encoding utf8NoBOM`; `$(` внутри двойных кавычек раскрывается
+  PowerShell'ом, а не bash — для циклов/подстановки писать скрипт-файл.
 - В WSL нет пароля для sudo в неинтерактивной сессии: установку пакетов подтверждает
   пользователь (NOPASSWD включается временно, файл `/etc/sudoers.d/ros-temp`).
 - Долгие команды (apt, colcon build) запускать фоном (`run_in_background`) и собирать
-  вывод через job_output.
+  вывод через job_output; длинный трон иначе ловит `Request timed out` на стороне клиента API.
 - Git-коммит-мессаги с кириллицей/скобками передавать через файл (`git commit -F file`),
   файл писать ASCII/UTF-8 без BOM (PowerShell 5.1 `-Encoding UTF8` добавляет BOM!).
   Force-push не всегда порождает прогон GitHub Actions — после amend+force проверять
