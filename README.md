@@ -51,6 +51,20 @@ ros2 launch turtle_bringup sim.launch.py    # терминал A: окно turtl
 Опыт имени: издатель в `/cmd_vel` виден (`Publisher count: 1`), но подписчиков у него нет;
 то же сообщение в `/turtle1/cmd_vel` двигает черепаху. Подробности — `evidence/pr02/commands.md`.
 
+## Порядок запуска (ПР03: нода patrol)
+
+```bash
+colcon build --symlink-install --packages-select patrol
+source install/setup.bash
+python3 -m pytest src/patrol/test          # чистые тесты decide_command
+export ROS_DOMAIN_ID=16
+ros2 launch turtle_bringup sim.launch.py   # терминал A
+# терминал B (правильный запуск — remap имени):
+ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel
+# без remap нода публикует в /cmd_vel — издатель виден, черепаха стоит (см. demo.md)
+# терминал C: ros2 topic hz /turtle1/cmd_vel   # ~10 Гц
+```
+
 Сборка собственных пакетов (с ПР02):
 
 ```bash
