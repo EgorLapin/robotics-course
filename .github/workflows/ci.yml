@@ -62,7 +62,7 @@ jobs:
           tar -xzf .course-kit/course-kit.tar.gz -C .course-kit
       # Checker текущей сдаваемой ПР: он проверяет diff от report.commit до HEAD,
       # поэтому предыдущие ПР им на новых коммитах не гоняем (evidence уже зачтены).
-      - name: Check PR03 evidence
-        if: hashFiles('evidence/pr03/report.json') != ''
+      - name: Check PR04 evidence
+        if: hashFiles('evidence/pr04/report.json') != ''
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR03 --submission .
+        run: python3 .course-kit/v1/tools/check_practice.py PR04 --submission .

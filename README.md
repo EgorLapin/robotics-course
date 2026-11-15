@@ -65,6 +65,20 @@ ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel
 # терминал C: ros2 topic hz /turtle1/cmd_vel   # ~10 Гц
 ```
 
+## Порядок запуска (ПР04: параметры patrol)
+
+```bash
+colcon build --symlink-install --packages-select patrol && source install/setup.bash
+python3 -m pytest src/patrol/test          # 25 passed (валидация + живой узел + команда)
+export ROS_DOMAIN_ID=16
+ros2 launch turtle_bringup sim.launch.py   # терминал A
+ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel   # терминал B
+# терминал C:
+ros2 param get /patrol publish_hz          # Double 10.0
+ros2 param set /patrol publish_hz 0.0      # rejected: out of range [1.0, 30.0] — узел жив
+ros2 param set /patrol publish_hz 5.0      # поток падает до 5 Гц (period 0.2000 s)
+```
+
 Сборка собственных пакетов (с ПР02):
 
 ```bash
