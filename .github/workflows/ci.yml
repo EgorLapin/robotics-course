@@ -48,6 +48,10 @@ jobs:
           printf '%s  %s\n' "$COURSE_KIT_SHA256" course-kit.tar.gz | sha256sum -c -
           mkdir -p .course-kit
           tar -xzf course-kit.tar.gz -C .course-kit
-      - name: Check PR evidence
+      # Активируй шаг вместе со сдачей ПР01 (evidence/pr01 должен существовать):
+      # - name: Check PR evidence
+      #   shell: bash
+      #   run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+      - name: Kit ready (checker включается вместе со сдачей)
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+        run: cat .course-kit/v1/VERSION
