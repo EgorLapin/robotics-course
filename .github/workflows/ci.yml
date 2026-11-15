@@ -27,13 +27,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # ПР01: вместо сборки — валидация environment.json; сборка turtle_bringup — с ПР02;
-      # colcon build + colcon test — с ПР03. Раскомментируй нужный блок по условию работы.
-      #
-      # - name: Validate environment JSON
-      #   shell: bash
-      #   run: python3 -m json.tool evidence/pr01/environment.json > /dev/null
-      #
+      - name: Validate environment JSON (PR01)
+        if: hashFiles('evidence/pr01/environment.json') != ''
+        shell: bash
+        run: python3 -m json.tool evidence/pr01/environment.json > /dev/null
+      # ПР02+: сборка turtle_bringup и test своей ноды — включаем по условию работ.
       # - name: Build and test
       #   shell: bash
       #   run: |
@@ -44,14 +42,11 @@ jobs:
       - name: Download course kit
         shell: bash
         run: |
-          curl -fsSLo course-kit.tar.gz "$COURSE_KIT_URL"
-          printf '%s  %s\n' "$COURSE_KIT_SHA256" course-kit.tar.gz | sha256sum -c -
           mkdir -p .course-kit
-          tar -xzf course-kit.tar.gz -C .course-kit
-      # Активируй шаг вместе со сдачей ПР01 (evidence/pr01 должен существовать):
-      # - name: Check PR evidence
-      #   shell: bash
-      #   run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
-      - name: Kit ready (checker включается вместе со сдачей)
+          curl -fsSLo .course-kit/course-kit.tar.gz "$COURSE_KIT_URL"
+          printf '%s  %s\n' "$COURSE_KIT_SHA256" .course-kit/course-kit.tar.gz | sha256sum -c -
+          tar -xzf .course-kit/course-kit.tar.gz -C .course-kit
+      - name: Check PR01 evidence
+        if: hashFiles('evidence/pr01/report.json') != ''
         shell: bash
-        run: cat .course-kit/v1/VERSION
+        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
