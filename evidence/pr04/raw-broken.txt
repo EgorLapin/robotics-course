@@ -1,0 +1,22 @@
+# ПР04 · «Сломать»: проверка частоты временно отключена, значение 0
+
+$ grep -n "ВРЕМЕННЫЙ ДЕФЕКТ" src/patrol/patrol/patrol.py
+97:                ok, reason = (True, "")  # ВРЕМЕННЫЙ ДЕФЕКТ ПР04: проверка отключена
+
+$ ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel   # узел работает
+
+$ ros2 param set /patrol publish_hz 0.0   # CLI ждёт ответ сервиса до таймаута:
+(ответа нет: узел упал В СРЕДЕ колбэка параметров, сервис не ответил)
+
+$ pgrep -f lib/patrol/patrol >/dev/null && echo YES || echo "NO — узел УМЕР"   # сразу после set
+NO — узел УМЕР
+
+--- последние строки лога узла patrol: конкретный воспроизводимый отказ ---
+    period = timer_period(self._values['publish_hz'])
+  File "/home/egor/ROS/build/patrol/patrol/patrol.py", line 44, in timer_period
+ZeroDivisionError: float division by zero
+[ros2run]: Process exited with failure 1
+
+$ ros2 topic echo /turtle1/pose --once | grep -E "linear_velocity|angular_velocity"
+linear_velocity: 0.0
+angular_velocity: 0.0

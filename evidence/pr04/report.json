@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR04",
+  "commit": "f99a114701b1d660d960660150306da55d8af1f1",
+  "course_kit": {
+    "version": "v1-w10",
+    "archive_sha256": "7a91d388d7bd3def7e058c8da48c32ff27ea6f14dc880a2da169c4102d456874"
+  },
+  "commands": [
+    "source /opt/ros/jazzy/setup.bash && source install/setup.bash && export ROS_DOMAIN_ID=16",
+    "colcon build --symlink-install --packages-select patrol",
+    "python3 -m pytest src/patrol/test",
+    "colcon test --packages-select patrol && colcon test-result --verbose",
+    "ros2 launch turtle_bringup sim.launch.py",
+    "ros2 run patrol patrol --ros-args -r cmd_vel:=/turtle1/cmd_vel",
+    "ros2 param list /patrol",
+    "ros2 param get /patrol publish_hz",
+    "ros2 param set /patrol publish_hz 0.0",
+    "ros2 param set /patrol publish_hz -3.0",
+    "ros2 param set /patrol publish_hz 5.0",
+    "ros2 service list | grep clear",
+    "ros2 service call /clear std_srvs/srv/Empty {}",
+    "ros2 action list -t",
+    "ros2 action info /turtle1/rotate_absolute",
+    "python3 .course-kit/v1/tools/check_practice.py PR04 --submission ."
+  ],
+  "tests": [
+    {
+      "name": "pytest src/patrol/test: 25 passed, 1 skipped (validate_param: 0/-3/NaN/inf/bool; границы 1..30)",
+      "status": "passed"
+    },
+    {
+      "name": "colcon test patrol: 29 tests, 0 errors, 0 failures, 2 skipped",
+      "status": "passed"
+    },
+    {
+      "name": "test_param_node: 10->5 Гц пересоздаёт таймер (0.2 с), ровно один таймер в node.timers",
+      "status": "passed"
+    },
+    {
+      "name": "test_param_node: 0/-3/NaN/inf отклонены, _timer и publish_hz=10.0 не изменились",
+      "status": "passed"
+    },
+    {
+      "name": "живой узел: param set 0.0 -> 'rejected: out of range [1.0, 30.0]', param get = 10.0, NODE_ALIVE (raw-fixed.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "поток: зонд 10 Гц до (+10..11/с), после set 5.0 ровно +5/с; лог timer recreated 0.1000 -> 0.2000 (raw-fixed.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "сбой: валидация отключена + publish_hz 0.0 -> ZeroDivisionError, процесс patrol мёртв (raw-broken.txt)",
+      "status": "passed"
+    }
+  ],
+  "defect": {
+    "reproducer": "Временный дефект: в колбэке _on_set_parameters проверка заменена на ok, reason = (True, \"\") (grep-строка в raw-broken.txt). При работающем узле: ros2 param set /patrol publish_hz 0.0 — CLI не получает ответа, pgrep lib/patrol/patrol пуст, в логе узла ZeroDivisionError: float division by zero в timer_period (1.0 / 0.0), [ros2run]: Process exited with failure 1. Отказ воспроизводится повторением тех же шагов.",
+    "root_cause": "Без проверки значение 0.0 проходит валидацию и записывается в _values['publish_hz'], после чего _restart_timer вызывает timer_period(0.0) = 1.0/0.0. Деление на ноль выполняется внутри колбэка параметров в исполнителе узла — необработанное исключение роняет весь процесс; активное состояние (таймер, поток) разрушается вместо отклонения значения.",
+    "proof_after": "Проверка validate_param возвращена (коммит реализации не менялся). Тот же тест: ros2 param set /patrol publish_hz 0.0 -> 'Setting parameter failed: publish_hz=0.0 rejected: out of range [1.0, 30.0]'; ros2 param get = Double 10.0 — старая частота сохранена, узел жив (NODE_ALIVE), поток 10 Гц не тронут. Допустимое ros2 param set 5.0 пересоздаёт таймер (лог period 0.1000 -> 0.2000) и поток становится +5 сообщ/с вместо +10 (замер зондом, raw-fixed.txt). Узловые pytest-тесты фиксируют: отказов 0, ровно один таймер."
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true
+  },
+  "time": {
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
+  },
+  "ai_used": true
+}

@@ -1,0 +1,70 @@
+# ПР04 · «Доказать»: проверка возвращена
+
+## Поток ДО смены: python3 /tmp/rate_probe.py --secs 10 --label A
+# (прогрев до первого сообщения, затем счёт +N в секунду; publish_hz=10.0)
+[A] warmup 1.4 с, pubs: 1
+[A] sec 1: +11
+[A] sec 2: +10
+[A] sec 3: +11
+[A] sec 4: +10
+[A] sec 5: +10
+[A] sec 6: +11
+[A] sec 7: +10
+[A] sec 8: +10
+[A] sec 9: +10
+[A] sec 10: +11
+
+$ ros2 param get /patrol publish_hz   # до опытов
+Double value is: 10.0
+
+$ ros2 param set /patrol publish_hz 0.0   # ОТКЛОНЁН
+Setting parameter failed: publish_hz=0.0 rejected: out of range [1.0, 30.0]
+$ ros2 param set /patrol publish_hz -3.0   # ОТКЛОНЁН
+Setting parameter failed: publish_hz=-3.0 rejected: out of range [1.0, 30.0]
+
+$ ros2 param get /patrol publish_hz   # старое значение СОХРАНЕНО
+Double value is: 10.0
+$ pgrep -f lib/patrol/patrol >/dev/null && echo NODE_ALIVE   # нода жива, таймер не тронут
+NODE_ALIVE
+
+## Допустимая смена 10 -> 5 Гц
+$ ros2 param set /patrol publish_hz 5.0
+Set parameter successful
+$ ros2 param get /patrol publish_hz   # после смены
+Double value is: 5.0
+
+--- лог ноды (timer recreated) ---
+[INFO] [1794770145.477514288] [patrol]: timer recreated: period 0.1000 s (publish_hz=10.0)
+[INFO] [1794770185.119192152] [patrol]: timer recreated: period 0.2000 s (publish_hz=5.0)
+
+## Поток ПОСЛЕ смены: python3 /tmp/rate_probe.py --secs 10 --label B   # publish_hz=5.0
+[B] warmup 2.6 с, pubs: 1
+[B] sec 1: +5
+[B] sec 2: +5
+[B] sec 3: +5
+[B] sec 4: +5
+[B] sec 5: +5
+[B] sec 6: +6
+[B] sec 7: +5
+[B] sec 8: +5
+[B] sec 9: +5
+[B] sec 10: +5
+
+# ПР04 · raw-service-action.txt — готовый сервис и действие turtlesim
+
+$ ros2 service list | grep clear
+/clear
+$ ros2 service type /clear
+std_srvs/srv/Empty
+$ ros2 topic echo /turtle1/pose --once | grep -E "^x:"   # поза ДО очистки
+x: 5.08633279800415
+$ ros2 service call /clear std_srvs/srv/Empty "{}"   # запрос без данных, ответ пустой
+response:
+
+$ ros2 action list -t
+/turtle1/rotate_absolute [turtlesim/action/RotateAbsolute]
+$ ros2 action info /turtle1/rotate_absolute   # goal + cancel + feedback + result
+Action: /turtle1/rotate_absolute
+Action clients: 0
+Action servers: 1
+    /turtlesim
