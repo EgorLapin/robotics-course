@@ -47,3 +47,12 @@
   пользователь (NOPASSWD включается временно, файл `/etc/sudoers.d/ros-temp`).
 - Долгие команды (apt, colcon build) запускать фоном (`run_in_background`) и собирать
   вывод через job_output.
+- Git-коммит-мессаги с кириллицей/скобками передавать через файл (`git commit -F file`),
+  файл писать ASCII/UTF-8 без BOM (PowerShell 5.1 `-Encoding UTF8` добавляет BOM!).
+  Force-push не всегда порождает прогон GitHub Actions — после amend+force проверять
+  `gh api repos/EgorLapin/robotics-course/actions/runs?per_page=5`, при отсутствии
+  прогона сделать `git commit --allow-empty` + push.
+- В WSL стоит `gh` в ~/.local/bin (в PATH ~/.local/bin есть). Локальный course-kit
+  лежит в ~/ROS/.course-kit (v1-w10); перед новой неделей сверять `GET /api/course-kit`.
+- CI (.github/workflows/ci.yml): шаг checker закомментирован до первой сдачи — включается
+  вместе с evidence/prNN; образ osrf/ros:jazzy-desktop-full, Node-шаг до checkout обязателен.
