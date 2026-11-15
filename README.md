@@ -37,6 +37,20 @@ ros2 topic hz /turtle1/pose                  # ~62,5 Гц, остановка Ct
 по таймауту (exit=124). Возврат B в домен 16 восстанавливает позу (exit=0).
 Наблюдения — в `evidence/pr01/`.
 
+## Порядок запуска (ПР02: пакет turtle_bringup и launch)
+
+```bash
+colcon build --symlink-install --packages-select turtle_bringup   # терминал сборки
+source install/setup.bash
+export ROS_DOMAIN_ID=16
+ros2 launch turtle_bringup sim.launch.py    # терминал A: окно turtlesim, Ctrl+C — остановка
+# терминал B: ros2 topic pub --once /turtle1/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 1.0}, angular: {z: 0.5}}"
+# терминал C: ros2 topic info /turtle1/cmd_vel --verbose (pub+sub), /cmd_vel — pub 0 sub без подписчика
+```
+
+Опыт имени: издатель в `/cmd_vel` виден (`Publisher count: 1`), но подписчиков у него нет;
+то же сообщение в `/turtle1/cmd_vel` двигает черепаху. Подробности — `evidence/pr02/commands.md`.
+
 Сборка собственных пакетов (с ПР02):
 
 ```bash
@@ -59,7 +73,7 @@ tar -xzf robotics-course-kit-v1-w10-7a91d388d7bd.tar.gz -C .course-kit
 ```bash
 colcon test --event-handlers console_direct+
 colcon test-result --verbose
-python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+python3 .course-kit/v1/tools/check_practice.py PR02 --submission .   # номер текущей ПР
 ```
 
 ## Структура

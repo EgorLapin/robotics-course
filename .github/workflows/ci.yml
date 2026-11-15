@@ -31,14 +31,16 @@ jobs:
         if: hashFiles('evidence/pr01/environment.json') != ''
         shell: bash
         run: python3 -m json.tool evidence/pr01/environment.json > /dev/null
-      # ПР02+: сборка turtle_bringup и test своей ноды — включаем по условию работ.
-      # - name: Build and test
-      #   shell: bash
-      #   run: |
-      #     source /opt/ros/jazzy/setup.bash
-      #     colcon build --symlink-install
-      #     colcon test --event-handlers console_direct+
-      #     colcon test-result --verbose
+      - name: Build turtle_bringup and check installed launch (PR02)
+        if: hashFiles('src/turtle_bringup/package.xml') != ''
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          set -o pipefail
+          colcon build --symlink-install --packages-select turtle_bringup
+          source install/setup.bash
+          test -f "$(ros2 pkg prefix turtle_bringup)/share/turtle_bringup/launch/sim.launch.py"
+          python3 -m py_compile src/turtle_bringup/launch/sim.launch.py
       - name: Download course kit
         shell: bash
         run: |
@@ -46,7 +48,9 @@ jobs:
           curl -fsSLo .course-kit/course-kit.tar.gz "$COURSE_KIT_URL"
           printf '%s  %s\n' "$COURSE_KIT_SHA256" .course-kit/course-kit.tar.gz | sha256sum -c -
           tar -xzf .course-kit/course-kit.tar.gz -C .course-kit
-      - name: Check PR01 evidence
-        if: hashFiles('evidence/pr01/report.json') != ''
+      # Checker текущей сдаваемой ПР: он проверяет diff от report.commit до HEAD,
+      # поэтому предыдущие ПР им на новых коммитах не гоняем (evidence уже зачтены).
+      - name: Check PR02 evidence
+        if: hashFiles('evidence/pr02/report.json') != ''
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR01 --submission .
+        run: python3 .course-kit/v1/tools/check_practice.py PR02 --submission .
