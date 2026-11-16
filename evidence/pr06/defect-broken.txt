@@ -1,0 +1,44 @@
+# PR06 defect (branch pr06-broken): lidar_joint parent changed to camera_link
+
+$ git log --oneline -2   # ветка pr06-broken поверх коммита реализации
+ef71b8f PR06 broken: lidar_joint parent camera_link instead of base_link
+d01f2ce PR06: course_description - Ackermann xacro, robot_state_publisher launch, structure tests
+
+$ grep -A 3 "lidar_joint" <(xacro src/course_description/urdf/vehicle.urdf.xacro)
+<joint name="lidar_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="lidar_link"/>
+    <origin rpy="0 0 0" xyz="0.28 0 0.38"/>
+
+## check_urdf принимает дерево (связно, ациклично) - структуры мало:
+root Link: base_link has 6 child(ren)
+        child(1):  lidar_link
+
+## структуры достаточно? ТЕСТ падал (grep ниже):
+E             + camera_link
+
+test/test_vehicle_urdf.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED test/test_vehicle_urdf.py::test_fixed_sensors_parent_is_base_link - As...
+1 failed, 5 passed in 0.35s
+
+## живое tf2 (robot_state_publisher на сломанной модели):
+$ ros2 run tf2_ros tf2_echo base_link lidar_link
+At time 0.0
+- Translation: [0.560, 0.000, 0.760]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.000]
+- Matrix:
+  1.000  0.000  0.000  0.560
+  0.000  1.000  0.000  0.000
+
+$ ros2 run tf2_ros tf2_echo base_link camera_link   # для сравнения
+At time 0.0
+- Translation: [0.280, 0.000, 0.380]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.000]
+
+ОЖИДАЛОСЬ base_link -> lidar_link = 0.28 0 0.38 (один offset).
+ПОЛУЧЕНО: offset применён дважды (camera 0.28 0 0.38 + lidar 0.28 0 0.38).

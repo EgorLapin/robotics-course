@@ -1,0 +1,29 @@
+# PR06 fixed (main): lidar_joint parent = base_link again
+
+$ git log --oneline -2   # main, дефект отменён возвратом файла
+d01f2ce PR06: course_description - Ackermann xacro, robot_state_publisher launch, structure tests
+82d5f1f PR05: evidence - QoS defect before/after, MCAP bag metadata, tests
+
+$ ros2 run tf2_ros tf2_echo base_link lidar_link
+At time 0.0
+- Translation: [0.280, 0.000, 0.380]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+
+## структура дерева:
+$ check_urdf <(xacro src/course_description/urdf/vehicle.urdf.xacro)
+robot name is: course_ackermann
+---------- Successfully Parsed XML ---------------
+root Link: base_link has 7 child(ren)
+    child(1):  camera_link
+    child(2):  front_left_knuckle
+        child(1):  front_left_wheel
+    child(3):  front_right_knuckle
+        child(1):  front_right_wheel
+    child(4):  imu_link
+    child(5):  lidar_link
+    child(6):  rear_left_wheel
+    child(7):  rear_right_wheel
+
+## тесты (тот же test_fixed_sensors_parent_is_base_link, что падал):
+s........                                                                [100%]
+8 passed, 1 skipped in 0.61s

@@ -1,0 +1,13 @@
+# PR06 test evidence
+
+$ colcon build --symlink-install   # 4 packages finished
+
+## $ colcon test --event-handlers console_direct+   (exit 0)
+Summary: 4 packages finished [5.27s]
+
+## $ colcon test-result --verbose   (exit 0)
+Summary: 46 tests, 0 errors, 0 failures, 4 skipped
+
+## $ (cd src/course_description && python3 -m pytest test -q)   (exit 0)
+s........                                                                [100%]
+8 passed, 1 skipped in 0.66s

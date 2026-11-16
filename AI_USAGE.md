@@ -118,3 +118,32 @@
   (exit 0). pytest 30+2 passed,
   colcon test 37 тестов 0 ошибок; локальный `check_practice.py PR05` и зелёный CI на
   evidence-коммите.
+
+## PR06
+
+- Использован ИИ: да (`ai_used: true` в отчёте этой ПР).
+- Модель и версия: DeepSeek (агентная сборка qwen3.8-flash-next в DeepSeek Harness).
+- Среда или интерфейс агента: DeepSeek Harness (веб-GUI), команды — в WSL2 Ubuntu этого
+  workspace.
+- Затронутые компоненты: пакет `src/course_description` (`urdf/vehicle.urdf.xacro` —
+  перенос размеров из kit SDF в URDF по REP-103 с xacro-параметрами;
+  `launch/description.launch.py` — Command(xacro) в robot_description, rviz через
+  IfCondition; `test/test_vehicle_urdf.py` — структура, размеры, инерции, check_urdf),
+  прогоны опытов (tf-qos, tf2_echo до/после, view_frames, RViz), тексты
+  `evidence/pr06/*` (frames.md, model-check.txt, tf-qos.txt, defect-broken.txt),
+  report.json, README, CI workflow.
+- Характер помощи: транскрипция SDF в Xacro (осевые соглашения, макросы колеса/оси/
+  сенсора), диагностика окружения (check_urdf читает stdin только с аргументом `-`;
+  `ros2 topic info`/`echo` не видели `/tf_static` из-за холодного discovery — добавлены
+  повторные пробы; flake8 I100/I201/E741/F841 в собственных тестах), формулировки
+  «до/сбой/после» по фактическим логам. Дефект (parent `camera_link` у `lidar_link`
+  в отдельной ветке) и состав свидетельств заданы условием работы.
+- Как результат был проверен независимо: живой прогон — `check_urdf` развёрнутого
+  URDF строит дерево base_link + 7 детей (model-check.txt); RViz запускается с моделью
+  (rviz2 жив на WSLg); `topic info --verbose`: `/tf_static` RELIABLE+TRANSIENT_LOCAL,
+  `/tf` RELIABLE+VOLATILE; позднее чтение: transient_local echo exit 0, volatile
+  exit 124 (tf-qos.txt); на ветке pr06-broken `tf2_echo base_link lidar_link`
+  даёт [0.560 0 0.760] (двойной offset) и структура-тест падает, а `check_urdf`
+  дерево принимает; после возврата parent=[0.280 0 0.380], тест зелёный. pytest
+  8 passed, colcon test 46 тестов 0 ошибок; локальный `check_practice.py PR06` и
+  зелёный CI на evidence-коммите.

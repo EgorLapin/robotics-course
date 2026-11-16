@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "practice_id": "PR06",
+  "commit": "8539200e26adf1a4217c836ae1c9165d8d3a4bfb",
+  "course_kit": {
+    "version": "v1-w10",
+    "archive_sha256": "3b11d37c4d467d98b8292b670ded6fedced098dc5a33d7ac0a39b549366b18e8"
+  },
+  "commands": [
+    "source /opt/ros/jazzy/setup.bash && source install/setup.bash && export ROS_DOMAIN_ID=16 ROS_LOCALHOST_ONLY=1",
+    "colcon build --symlink-install",
+    "xacro src/course_description/urdf/vehicle.urdf.xacro > /tmp/vehicle.urdf",
+    "check_urdf /tmp/vehicle.urdf",
+    "(cd src/course_description && python3 -m pytest test)",
+    "colcon test --event-handlers console_direct+ && colcon test-result --verbose",
+    "ros2 launch course_description description.launch.py",
+    "ros2 launch course_description description.launch.py rviz:=true",
+    "ros2 topic info /tf_static --verbose",
+    "ros2 topic info /tf --verbose",
+    "timeout 4 ros2 topic echo /tf_static --once --qos-durability transient_local --qos-reliability reliable",
+    "timeout 4 ros2 topic echo /tf_static --once --qos-durability volatile --qos-reliability reliable",
+    "ros2 run tf2_ros tf2_echo base_link lidar_link",
+    "ros2 run tf2_tools view_frames",
+    "git checkout -b pr06-broken (parent camera_link) -> capture -> back to main",
+    "python3 .course-kit/v1/tools/check_practice.py PR06 --submission ."
+  ],
+  "tests": [
+    {
+      "name": "pytest src/course_description/test: 8 passed, 1 skipped (родители camera/lidar/imu = base_link; цепочка knuckle->wheel; размеры 1.05/0.52/0.22 и колесо 0.12/0.07 из kit SDF; инерции физически допустимы; check_urdf принимает)",
+      "status": "passed"
+    },
+    {
+      "name": "colcon test: 46 tests, 0 errors, 0 failures, 4 skipped (tests.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "robot_state_publisher + RViz (rviz:=true на WSLg): процесс rviz2 жив, /tf_static публикуется (model-check.txt, лог запуска)",
+      "status": "passed"
+    },
+    {
+      "name": "/tf_static: RELIABLE + TRANSIENT_LOCAL, /tf: RELIABLE + VOLATILE (topic info --verbose, tf-qos.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "позднее чтение /tf_static: transient_local подписчик получает кадры (exit 0), volatile — нет (exit 124) (tf-qos.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "дефект (ветка pr06-broken ef71b8f, parent camera_link): tf2_echo base_link->lidar_link = [0.560 0 0.760] вместо [0.280 0 0.380], test_fixed_sensors_parent_is_base_link FAILED, при этом check_urdf дерево принимает (defect-broken.txt)",
+      "status": "passed"
+    },
+    {
+      "name": "после возврата parent=base_link (main): tf2_echo = [0.280 0 0.380], view_frames: camera/imu/lidar parent base_link, тесты зелёные (model-check.txt, frames.md)",
+      "status": "passed"
+    }
+  ],
+  "defect": {
+    "reproducer": "Ветка pr06-broken (коммит ef71b8f): в vehicle.urdf.xacro <xacro:sensor prefix=\"lidar\" parent=\"camera_link\"/> вместо базового parent (offset тот же 0.28 0 0.38). colcon build, ros2 launch course_description description.launch.py; ros2 run tf2_ros tf2_echo base_link lidar_link -> Translation [0.560, 0.000, 0.760] — offset применён дважды (сначала base->camera, затем camera->lidar); python3 -m pytest test: FAILED test_fixed_sensors_parent_is_base_link (parent = camera_link). check_urdf при этом дерево принимает: структурная проверка не доказывает геометрию.",
+    "root_cause": "Фиксированный joint задаёт преобразование ПОТомка относительно РОДителя, а не абсолютную позу. Смена родителя с base_link на camera_link сохраняет локальный offset 0.28 0 0.38, но добавляет к нему позу нового родителя (те же 0.28 0 0.38): в дереве tf2 композиция преобразований, и лидар оказывается в (0.56, 0, 0.76) — вдвое выше и дальше корпуса. URDF синтаксически и структурно корректен (связно, ациклично), поэтому check_urdf ошибку не ловит — нужен тест ожидаемого parent и tf2_echo.",
+    "proof_after": "main (возврат <xacro:sensor prefix=\"lidar\"/>): ros2 run tf2_ros tf2_echo base_link lidar_link -> Translation [0.280, 0.000, 0.380] — ровно offset из URDF; view_frames: lidar_link parent 'base_link', broadcaster 'default_authority' (единственный издатель); тот же тест test_fixed_sensors_parent_is_base_link проходит, pytest 8 passed, check_urdf зелёный (model-check.txt)."
+  },
+  "claims": {
+    "public_tests_passed": true,
+    "defect_reproduced": true,
+    "defect_fixed": true
+  },
+  "time": {
+    "contact_academic_hours": 2,
+    "self_study_hours": 2
+  },
+  "ai_used": true
+}
