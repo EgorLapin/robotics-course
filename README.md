@@ -126,6 +126,33 @@ ros2 bag play evidence/pr05/bag --qos-profile-overrides-path config/qos-override
 `qos-after.txt` (живой поток + `ros2 bag info`: 1 топик, 3141 сообщение),
 `bag-metadata.yaml` (копия metadata.yaml bag-а), `tests.txt`.
 
+## Порядок запуска (ПР06: модель Ackermann, tf2 и QoS преобразований)
+
+`course_description` — описание робота из course-kit SDF (только размеры, без
+плагинов Gazebo): `urdf/vehicle.urdf.xacro` с xacro-параметрами корпуса, колеи и
+колеса (REP-103: x вперёд, y влево, z вверх; колёса крутятся вокруг +y).
+
+```bash
+# развернуть Xacro и проверить структуру
+xacro src/course_description/urdf/vehicle.urdf.xacro > /tmp/vehicle.urdf
+check_urdf /tmp/vehicle.urdf
+
+# дерево tf2: фиксированные звенья камеры/лидара/IMU публикуются сразу
+ros2 launch course_description description.launch.py            # + rviz:=true для RViz
+ros2 run tf2_ros tf2_echo base_link lidar_link
+ros2 run tf2_tools view_frames
+
+# QoS преобразований: /tf_static = RELIABLE + TRANSIENT_LOCAL (поздний
+# подписчик получает кадры), volatile-подписчик не получает ничего
+ros2 topic info /tf_static --verbose
+timeout 4 ros2 topic echo /tf_static --once --qos-durability transient_local --qos-reliability reliable
+timeout 4 ros2 topic echo /tf_static --once --qos-durability volatile --qos-reliability reliable   # exit 124
+```
+
+Свидетельства: `evidence/pr06/frames.md` (владельцы преобразований),
+`model-check.txt` (xacro + check_urdf + тесты), `tf-qos.txt` (профиль /tf_static
+и позднее чтение), `report.json`.
+
 ## Структура
 
 - `src/` — ROS-пакеты (`package.xml`, `CMakeLists.txt` / `setup.py`)

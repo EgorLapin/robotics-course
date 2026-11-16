@@ -52,7 +52,7 @@ jobs:
           test -x "$(ros2 pkg prefix patrol)/lib/patrol/patrol"
           colcon test --packages-select patrol
           colcon test-result --verbose
-          python3 -m pytest src/patrol/test
+          (cd src/patrol && python3 -m pytest test)
       - name: Build course_bringup, check QoS relay entries (PR05)
         if: hashFiles('src/course_bringup/package.xml') != ''
         shell: bash
@@ -65,8 +65,22 @@ jobs:
           test -x "$(ros2 pkg prefix patrol)/lib/patrol/sensor_listener"
           test -f "$(ros2 pkg prefix course_bringup)/share/course_bringup/launch/patrol.launch.py"
           python3 -m py_compile src/course_bringup/launch/patrol.launch.py
-          python3 -m pytest src/patrol/test
+          # flake8-тесты пакета сканируют cwd: запуск строго из каталога пакета,
+          # иначе colcon-сгенерированные файлы в build/ других пакетов ловят E501.
+          (cd src/patrol && python3 -m pytest test)
           (cd src/course_bringup && python3 -m pytest test)
+      - name: Expand xacro and test model (PR06)
+        if: hashFiles('src/course_description/package.xml') != ''
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          set -o pipefail
+          colcon build --symlink-install --packages-select course_description
+          source install/setup.bash
+          test -f "$(ros2 pkg prefix course_description)/share/course_description/urdf/vehicle.urdf.xacro"
+          xacro src/course_description/urdf/vehicle.urdf.xacro > /tmp/vehicle.urdf
+          python3 -c "import xml.etree.ElementTree as ET; r=ET.parse('/tmp/vehicle.urdf').getroot(); assert r.get('name')=='course_ackermann'"
+          (cd src/course_description && python3 -m pytest test)
       - name: Download course kit
         shell: bash
         run: |
@@ -76,7 +90,7 @@ jobs:
           tar -xzf .course-kit/course-kit.tar.gz -C .course-kit
       # Checker текущей сдаваемой ПР: он проверяет diff от report.commit до HEAD,
       # поэтому предыдущие ПР им на новых коммитах не гоняем (evidence уже зачтены).
-      - name: Check PR05 evidence
-        if: hashFiles('evidence/pr05/report.json') != ''
+      - name: Check PR06 evidence
+        if: hashFiles('evidence/pr06/report.json') != ''
         shell: bash
-        run: python3 .course-kit/v1/tools/check_practice.py PR05 --submission .
+        run: python3 .course-kit/v1/tools/check_practice.py PR06 --submission .
