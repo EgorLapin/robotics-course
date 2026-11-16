@@ -85,3 +85,36 @@
   passed (включая узловые тесты «0 отклонён, таймер не тронут» и «один таймер»),
   colcon test 0 failures; локальный `check_practice.py PR04` и зелёный CI на
   evidence-коммите.
+
+## PR05
+
+- Использован ИИ: да (`ai_used: true` в отчёте этой ПР).
+- Модель и версия: DeepSeek (агентная сборка qwen3.8-flash-next в DeepSeek Harness).
+- Среда или интерфейс агента: DeepSeek Harness (веб-GUI), команды — в WSL2 Ubuntu этого
+  workspace.
+- Затронутые компоненты: `src/patrol/patrol/pose_relay.py` (издатель `sensor_pose` с
+  профилем BEST_EFFORT keep_last(10), разбор имени профиля из строки),
+  `src/patrol/patrol/sensor_listener.py` (подписчик с профилем из параметра), пакет
+  `src/course_bringup` (`launch/patrol.launch.py`: namespace/record/bag_dir/
+  subscriber_reliability, IfCondition для recorder), `config/qos-overrides.yaml`,
+  тесты `test_qos_profiles.py`, прогоны опытов (до/после/реплей), тексты
+  `evidence/pr05/*`, report.json, README, CI workflow.
+- Характер помощи: написание кода и launch по условию (QoS-профили, IfCondition вместо
+  plain if, относительные имена топиков), отладка съёма улик в WSL2 (launch-ребёнок
+  игнорировал SIGINT — запись финализирована по SIGTERM; `ros2 daemon` не видел топики
+  сразу после рестарта — добавлены повторные пробы discovery; `PythonExpression` в
+  аргументах ExecuteProcess ломал синтаксис — убран), формулировки «до/сбой/после» по
+  фактическим логам. Сценарий дефекта (reliable-подписчик против best-effort издателя)
+  и состав свидетельств заданы условием работы.
+- Как результат был проверен независимо: живой прогон на свежей загрузке WSL — при
+  `subscriber_reliability:=reliable` топик `/robot_a/sensor_pose` виден
+  (`ros2 topic list`), профиль издателя BEST_EFFORT / подписчика RELIABLE
+  (`topic info --verbose`), узел слушателя получил 0 сообщений, echo вышел по таймауту
+  (exit 124), контрольный best-effort bag в том же запуске записал 356 сообщений;
+  при `best_effort` — listener sample #1/#11..., echo печатает Pose (exit 0), записан
+  MCAP 3141 сообщение / 1 топик (`ros2 bag info`), реплей того же bag с
+  `--qos-profile-overrides-path config/qos-overrides.yaml`: reliable-читателю поток по-
+  прежнему недоступен (echo exit 124), читателю best_effort реплей доставляет Pose
+  (exit 0). pytest 30+2 passed,
+  colcon test 37 тестов 0 ошибок; локальный `check_practice.py PR05` и зелёный CI на
+  evidence-коммите.

@@ -1,0 +1,35 @@
+# PR05 qos-before.txt — слушатель reliable против best-effort датчика (дефект)
+
+$ ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=reliable record:=false
+
+## топики под неймспейсом (узлы публикуют относительные имена)
+$ ros2 topic list | grep -E "robot_a|turtle1/cmd_vel"
+/robot_a/sensor_pose
+/turtle1/cmd_vel
+
+## ros2 topic info /robot_a/sensor_pose --verbose
+Publisher count: 1
+Node name: pose_relay
+Node namespace: /robot_a
+Endpoint type: PUBLISHER
+  Reliability: BEST_EFFORT
+  Durability: VOLATILE
+Subscription count: 1
+Node name: sensor_listener
+Node namespace: /robot_a
+Endpoint type: SUBSCRIPTION
+  Reliability: RELIABLE
+  Durability: VOLATILE
+
+## узел sensor_listener: 0 полученных сообщений за ~25 с
+  строк 'sample #' в логе: 0
+
+## оба узла рапортуют о несовместимом QoS:
+[WARN] [robot_a.pose_relay]: New subscription discovered on topic 'sensor_pose', requesting incompatible QoS. No messages will be sent to it. Last incompatible policy: RELIABILITY
+[WARN] [robot_a.sensor_listener]: New publisher discovered on topic 'sensor_pose', offering incompatible QoS. No messages will be received from it. Last incompatible policy: RELIABILITY
+
+## контроль: поток жив в тот же момент (best-effort читатель пишет bag)
+  message_count: 356
+
+$ timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability reliable --once
+exit=124  (124 = топик виден, но ни одного сообщения надёжному читателю)

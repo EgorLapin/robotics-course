@@ -1,0 +1,17 @@
+# PR05 test evidence
+
+$ colcon build --symlink-install   # see build log; 3 packages finished
+
+## $ colcon test --event-handlers console_direct+   (exit 0)
+Summary: 3 packages finished [5.49s]
+
+## $ colcon test-result --verbose   (exit 0)
+Summary: 37 tests, 0 errors, 0 failures, 3 skipped
+
+## $ (cd src/patrol && python3 -m pytest test -q)   (exit 0)
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+30 passed, 1 skipped, 16 warnings in 1.01s
+
+## $ (cd src/course_bringup && python3 -m pytest test -q)   (exit 0)
+s..                                                                      [100%]
+2 passed, 1 skipped in 0.26s

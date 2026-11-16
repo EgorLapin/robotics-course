@@ -1,0 +1,50 @@
+# PR05 qos-after.txt - same system, subscriber switched to best_effort (FIXED)
+
+$ ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=best_effort record:=true bag_dir:=/home/egor/ROS/evidence/pr05/bag
+
+## listener log now delivers samples:
+[INFO] [1794804601.905360752] [robot_a.sensor_listener]: sensor_listener: sample #1 x=5.544 y=5.544
+[INFO] [1794804601.957014384] [robot_a.sensor_listener]: sensor_listener: sample #11 x=5.544 y=5.544
+  (listener sample log lines after ~25 s: 137)
+
+## no incompatible-QoS warnings since the switch:
+  incompatible lines: 0
+
+## ros2 topic echo (живой поток) с совместимым профилем — sample delivered LIVE:
+x: 7.144570350646973
+y: 7.663395404815674
+theta: 1.843214750289917
+linear_velocity: 0.5
+angular_velocity: 0.30000001192092896
+---
+exit=0  (0 = тот же топик, совместимый профиль: живой поток получает сообщения)
+
+## recording (started by the same launch via record:=true, IfCondition):
+$ ros2 bag info evidence/pr05/bag
+
+Files:             bag_0.mcap
+Bag size:          222.4 KiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          47.250999035s
+Start:             Nov 16 2026 11:50:02.019665586 (1794804602.019665586)
+End:               Nov 16 2026 11:50:49.270664621 (1794804649.270664621)
+Messages:          3141
+Topic information: Topic: /robot_a/sensor_pose | Type: turtlesim/msg/Pose | Count: 3141 | Serialization Format: cdr
+Service:           0
+Service information: 
+
+## replay of the SAME bag with config/qos-overrides.yaml (reliability: best_effort):
+$ ros2 bag play evidence/pr05/bag --loop --qos-profile-overrides-path config/qos-overrides.yaml
+
+$ timeout 25s ros2 topic echo /robot_a/sensor_pose --qos-reliability reliable --once   # during replay
+exit=124  (124: QoS is enforced on replay too - reliable reader gets nothing)
+
+## ros2 topic echo (во время реплея) с best_effort — REPLAY VERIFIED:
+x: 4.034499168395996
+y: 7.9251885414123535
+theta: -2.0159707069396973
+linear_velocity: 0.5
+angular_velocity: 0.30000001192092896
+---
+exit=0  (0 = тот же bag, совместимый профиль: реплей доставляет сообщения)
