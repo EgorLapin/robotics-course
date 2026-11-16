@@ -5,9 +5,12 @@
 - Репозиторий лежит ВНУТРИ WSL2: `Ubuntu` (Ubuntu 24.04), путь `/home/egor/ROS`.
   Из Windows доступен как `\\wsl.localhost\Ubuntu\home\egor\ROS`.
 - Linux-команды выполнять через: `wsl.exe -d Ubuntu -- bash -lc '<команда>'`.
-- Есть вторая дистрибуция `Ubuntu-26.04` — запасной вариант для связки Lyrical
-  (проектная часть курса зафиксирована на Ubuntu 26.04 / ROS 2 Lyrical / Gazebo Jetty;
-  базовые ПР01–ПР06 делаются на Jazzy здесь).
+- Дистрибуция `Ubuntu-26.04` (запасной вариант под связку Lyrical: проектная часть
+  курса — Ubuntu 26.04 / ROS 2 Lyrical / Gazebo Jetty) удалена 2026-11-16 по просьбе
+  пользователя: `wsl --unregister Ubuntu-26.04`, внутри ничего не было, кроме
+  свежего образа. К освободившимся ~2.3 ГБ поставить заново при необходимости:
+  `wsl --install -d Ubuntu-26.04` (инструкция установки ROS 2 Lyrical — та же,
+  что в ~/setup_ros_jazzy.sh, с зеркалом apt при необходимости).
 - GUI работает через WSLg (RViz, turtlesim — можно запускать, окна появятся на Windows).
   В неинтерактивной сессии (`wsl.exe -d X -- bash -c`) переменных GUI нет; в login-шелле
   (`bash -lc`) они есть: `DISPLAY=:0`, `WAYLAND_DISPLAY=wayland-0`.
