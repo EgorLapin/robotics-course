@@ -86,14 +86,14 @@ colcon build --symlink-install     # overlay из корня workspace
 source install/setup.bash
 ```
 
-Скачивание course-kit (в `.course-kit/`, в git не попадает; ревизия v1-w10):
+Скачивание course-kit (в `.course-kit/`, в git не попадает; ревизия v1-w10, sha256 3b11d37c…:
 
 ```bash
 mkdir -p .course-kit
-curl -fLO https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w10-7a91d388d7bd.tar.gz
-curl -fLO https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w10-7a91d388d7bd.tar.gz.sha256.txt
-sha256sum -c robotics-course-kit-v1-w10-7a91d388d7bd.tar.gz.sha256.txt
-tar -xzf robotics-course-kit-v1-w10-7a91d388d7bd.tar.gz -C .course-kit
+curl -fLO https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w10-3b11d37c4d46.tar.gz
+curl -fLO https://ros.lms.ci.nsu.ru/downloads/robotics-course-kit-v1-w10-3b11d37c4d46.tar.gz.sha256.txt
+sha256sum -c robotics-course-kit-v1-w10-3b11d37c4d46.tar.gz.sha256.txt
+tar -xzf robotics-course-kit-v1-w10-3b11d37c4d46.tar.gz -C .course-kit
 ```
 
 Проверка сдачи (сначала свои тесты, потом checker):
@@ -103,6 +103,28 @@ colcon test --event-handlers console_direct+
 colcon test-result --verbose
 python3 .course-kit/v1/tools/check_practice.py PR02 --submission .   # номер текущей ПР
 ```
+
+## Порядок запуска (ПР05: QoS датчика и namespace robot_a)
+
+Система: patrol + pose_relay (публикует `/turtle1/pose` в относительный
+`sensor_pose` с профилем BEST_EFFORT) + sensor_listener (профиль подписчика
+задаётся параметром). Неймспейс и запись — аргументы launch:
+
+```bash
+# Дефект: reliable-подписчик не получает ничего с best-effort издателя
+ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=reliable record:=false
+timeout 3s ros2 topic echo /robot_a/sensor_pose --qos-reliability reliable --once   # тишина, exit 124
+
+# Исправление: подписчик best_effort — живой поток и MCAP-запись (record через IfCondition)
+ros2 launch course_bringup patrol.launch.py namespace:=robot_a subscriber_reliability:=best_effort record:=true bag_dir:=evidence/pr05/bag
+
+# Реплей того же bag с наложением QoS (evidence тот же, что в живом эксперименте)
+ros2 bag play evidence/pr05/bag --qos-profile-overrides-path config/qos-overrides.yaml
+```
+
+Свидетельства: `evidence/pr05/qos-before.txt` (топик виден, 0 сообщений),
+`qos-after.txt` (живой поток + `ros2 bag info`: 1 топик, 3141 сообщение),
+`bag-metadata.yaml` (копия metadata.yaml bag-а), `tests.txt`.
 
 ## Структура
 
